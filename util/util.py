@@ -1,14 +1,13 @@
 from __future__ import print_function
-import torch
-import numpy as np
-from PIL import Image
-import inspect, re
-import numpy as np
+
 import os
-import collections
-from PIL import Image
-import cv2
 from collections import OrderedDict
+
+import cv2
+import numpy as np
+import torch
+from PIL import Image
+
 
 def save_all_tensors(opt, real_A, fake_B, fake_B_first, fake_B_raw, real_B, flow_ref, conf_ref, flow, weight, modelD):
     if opt.label_nc != 0:
@@ -24,17 +23,17 @@ def save_all_tensors(opt, real_A, fake_B, fake_B_first, fake_B_raw, real_B, flow
     if opt.use_instance:
         edges = tensor2im(real_A[0, -1, -1:], normalize=False)
         input_image += edges[:,:,np.newaxis]
-    
+
     if opt.add_face_disc:
         ys, ye, xs, xe = modelD.module.get_face_region(real_A[0, -1:])
         if ys is not None:
-            input_image[ys, xs:xe, :] = input_image[ye, xs:xe, :] = input_image[ys:ye, xs, :] = input_image[ys:ye, xe, :] = 255 
+            input_image[ys, xs:xe, :] = input_image[ye, xs:xe, :] = input_image[ys:ye, xs, :] = input_image[ys:ye, xe, :] = 255
 
     visual_list = [('input_image', input_image),
                    ('fake_image', tensor2im(fake_B)),
                    ('fake_first_image', tensor2im(fake_B_first)),
                    ('fake_raw_image', tensor2im(fake_B_raw)),
-                   ('real_image', tensor2im(real_B)),                                                          
+                   ('real_image', tensor2im(real_B)),
                    ('flow_ref', tensor2flow(flow_ref)),
                    ('conf_ref', tensor2im(conf_ref, normalize=False))]
     if flow is not None:
@@ -64,9 +63,9 @@ def tensor2im(image_tensor, imtype=np.uint8, normalize=True):
         image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * 255.0
     else:
         image_numpy = np.transpose(image_numpy, (1, 2, 0)) * 255.0
-    #image_numpy = (np.transpose(image_numpy, (1, 2, 0)) * std + mean)  * 255.0        
+    #image_numpy = (np.transpose(image_numpy, (1, 2, 0)) * std + mean)  * 255.0
     image_numpy = np.clip(image_numpy, 0, 255)
-    if image_numpy.shape[2] == 1:        
+    if image_numpy.shape[2] == 1:
         image_numpy = image_numpy[:,:,0]
     return image_numpy.astype(imtype)
 
@@ -77,7 +76,7 @@ def tensor2label(output, n_label, imtype=np.uint8):
         output = output[0, -1]
     if len(output.size()) == 4:
         output = output[0]
-    output = output.cpu().float()    
+    output = output.cpu().float()
     if output.size()[0] > 1:
         output = output.max(0, keepdim=True)[1]
     #print(output.size())
@@ -95,7 +94,7 @@ def tensor2flow(output, imtype=np.uint8):
         output = output[0]
     output = output.cpu().float().numpy()
     output = np.transpose(output, (1, 2, 0))
-    #mag = np.max(np.sqrt(output[:,:,0]**2 + output[:,:,1]**2)) 
+    #mag = np.max(np.sqrt(output[:,:,0]**2 + output[:,:,1]**2))
     #print(mag)
     hsv = np.zeros((output.shape[0], output.shape[1], 3), dtype=np.uint8)
     hsv[:, :, 0] = 255
@@ -109,8 +108,8 @@ def tensor2flow(output, imtype=np.uint8):
 def add_dummy_to_tensor(tensors, add_size=0):
     if add_size == 0 or tensors is None: return tensors
     if isinstance(tensors, list):
-        return [add_dummy_to_tensor(tensor, add_size) for tensor in tensors]    
-    
+        return [add_dummy_to_tensor(tensor, add_size) for tensor in tensors]
+
     if isinstance(tensors, torch.Tensor):
         dummy = torch.zeros_like(tensors)[:add_size]
         tensors = torch.cat([dummy, tensors])
@@ -119,8 +118,8 @@ def add_dummy_to_tensor(tensors, add_size=0):
 def remove_dummy_from_tensor(tensors, remove_size=0):
     if remove_size == 0 or tensors is None: return tensors
     if isinstance(tensors, list):
-        return [remove_dummy_from_tensor(tensor, remove_size) for tensor in tensors]    
-    
+        return [remove_dummy_from_tensor(tensor, remove_size) for tensor in tensors]
+
     if isinstance(tensors, torch.Tensor):
         tensors = tensors[remove_size:]
     return tensors
@@ -159,17 +158,17 @@ def labelcolormap(N):
                      (128, 64,128), (244, 35,232), (250,170,160), (230,150,140), ( 70, 70, 70), (102,102,156), (190,153,153),
                      (180,165,180), (150,100,100), (150,120, 90), (153,153,153), (153,153,153), (250,170, 30), (220,220,  0),
                      (107,142, 35), (152,251,152), ( 70,130,180), (220, 20, 60), (255,  0,  0), (  0,  0,142), (  0,  0, 70),
-                     (  0, 60,100), (  0,  0, 90), (  0,  0,110), (  0, 80,100), (  0,  0,230), (119, 11, 32), (  0,  0,142)], 
+                     (  0, 60,100), (  0,  0, 90), (  0,  0,110), (  0, 80,100), (  0,  0,230), (119, 11, 32), (  0,  0,142)],
                      dtype=np.uint8)
     elif N == 20: # Cityscapes eval
-        cmap = np.array([(128, 64,128), (244, 35,232), ( 70, 70, 70), (102,102,156), (190,153,153), (153,153,153), (250,170, 30), 
-                         (220,220,  0), (107,142, 35), (152,251,152), ( 70,130,180), (220, 20, 60), (255,  0,  0), (  0,  0,142), 
-                         (  0,  0, 70), (  0, 60,100), (  0, 80,100), (  0,  0,230), (119, 11, 32), (  0,  0,  0)], 
+        cmap = np.array([(128, 64,128), (244, 35,232), ( 70, 70, 70), (102,102,156), (190,153,153), (153,153,153), (250,170, 30),
+                         (220,220,  0), (107,142, 35), (152,251,152), ( 70,130,180), (220, 20, 60), (255,  0,  0), (  0,  0,142),
+                         (  0,  0, 70), (  0, 60,100), (  0, 80,100), (  0,  0,230), (119, 11, 32), (  0,  0,  0)],
                          dtype=np.uint8)
     else:
         cmap = np.zeros((N, 3), dtype=np.uint8)
         for i in range(N):
-            r, g, b = 0, 0, 0            
+            r, g, b = 0, 0, 0
             id = i
             for j in range(7):
                 str_id = uint82bin(id)
@@ -177,7 +176,7 @@ def labelcolormap(N):
                 g = g ^ (np.uint8(str_id[-2]) << (7-j))
                 b = b ^ (np.uint8(str_id[-3]) << (7-j))
                 id = id >> 3
-            cmap[i, 0], cmap[i, 1], cmap[i, 2] = r, g, b             
+            cmap[i, 0], cmap[i, 1], cmap[i, 2] = r, g, b
     return cmap
 
 def colormap(n):

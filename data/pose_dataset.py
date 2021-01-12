@@ -77,7 +77,7 @@ class PoseDataset(BaseDataset):
             A_np = np.array(A_img)
             part_labels = A_np[:,:,2]
             for part_id in range(1, 25):
-                if (np.random.rand() < self.opt.random_drop_prob):
+                if np.random.rand() < self.opt.random_drop_prob:
                     A_np[(part_labels == part_id), :] = 0
             if self.opt.remove_face_labels:
                 A_np[(part_labels == 23) | (part_labels == 24), :] = 0
@@ -100,7 +100,7 @@ class PoseDataset(BaseDataset):
         w, h = A_img.size
         A_np = np.array(A_img)
 
-        if first == True:
+        if first:
             part_labels = A_np[:,:,2]
             part_coords = np.nonzero((part_labels == 1) | (part_labels == 2))
             y, x = part_coords[0], part_coords[1]

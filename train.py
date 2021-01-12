@@ -67,7 +67,7 @@ def train():
 
                 ### temporal discriminator
                 # get skipped frames for each temporal scale
-                frames_all, frames_skipped = modelD.module.get_all_skipped_frames(frames_all, \
+                frames_all, frames_skipped = modelD.module.get_all_skipped_frames(frames_all,
                                                                                   real_B, fake_B, flow_ref, conf_ref, t_scales, tD, n_frames_load, i, flowNet)
 
                 # run discriminator for each temporal scale

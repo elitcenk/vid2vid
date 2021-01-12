@@ -41,7 +41,7 @@ class HTML:
                                 if height != 0:
                                     img(style="width:%dpx;height:%dpx" % (width, height), src=os.path.join('images', im))
                                 else:
-                                    img(style="width:%dpx" % (width), src=os.path.join('images', im))
+                                    img(style="width:%dpx" % width, src=os.path.join('images', im))
                             br()
                             p(txt)
 
