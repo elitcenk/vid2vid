@@ -1,0 +1,1 @@
+vid2vid.ipynb dosyasını çalıştırmanı gerekmektedir. Bu dosya Colab ile çalışmaktadır.
